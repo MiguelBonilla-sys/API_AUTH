@@ -4,8 +4,7 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    PORT=8000
+    PYTHONPATH=/app
 
 # Create and set working directory
 WORKDIR /app
@@ -33,12 +32,9 @@ RUN adduser --disabled-password --gecos '' --uid 1000 appuser \
     && chown -R appuser:appuser /app
 USER appuser
 
-# Expose port
-EXPOSE $PORT
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:$PORT/health || exit 1
+# Expose port (Railway sets this dynamically)
+EXPOSE 8000
 
 # Run the application
-CMD uvicorn main:app --host 0.0.0.0 --port $PORT
+# Note: Railway will override this with the startCommand from railway.toml
+CMD ["python", "main.py"]
