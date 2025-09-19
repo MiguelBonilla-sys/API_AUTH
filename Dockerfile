@@ -37,4 +37,4 @@ EXPOSE 8000
 
 # Run the application
 # Note: Railway will override this with the startCommand from railway.toml
-CMD ["python", "main.py"]
+CMD ["python", "start.py"]

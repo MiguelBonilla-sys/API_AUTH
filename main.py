@@ -74,17 +74,20 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint for Railway"""
-    return {"status": "healthy"}
+    return {"status": "healthy", "timestamp": "2025-09-19T00:00:00Z"}
 
 
 # Railway compatibility: Run with uvicorn if executed directly
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
+    print(f"🚀 Starting API Auth Gateway on port {port}")
+    print(f"📊 Health check endpoint: http://0.0.0.0:{port}/health")
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=port,
         reload=False,  # Disable reload in production
-        access_log=True
+        access_log=True,
+        log_level="info"
     )
