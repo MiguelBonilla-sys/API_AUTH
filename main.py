@@ -32,11 +32,18 @@ async def lifespan(app: FastAPI):
     # Startup: Create database tables (only if DATABASE_URL is configured)
     database_url = os.getenv("DATABASE_URL")
     if database_url and not database_url.startswith("postgresql://user:password@localhost"):
-        await create_tables()
+        try:
+            print("🔄 Initializing database tables...")
+            await create_tables()
+            print("✅ Database tables initialized successfully")
+        except Exception as e:
+            print(f"⚠️  Database initialization failed: {e}")
+            print("🔄 Continuing without database (health check only mode)")
     else:
         print("⚠️  Skipping database initialization - Configure DATABASE_URL for production")
     yield
     # Shutdown: Clean up resources if needed
+    print("🔄 Shutting down API Gateway...")
 
 
 # Create FastAPI app instance

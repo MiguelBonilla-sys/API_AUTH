@@ -12,7 +12,8 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/a
 # Convert Railway DATABASE_URL to async if needed
 # Using psycopg2 instead of asyncpg due to compilation issues
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
-    ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://")
+    # Use psycopg2 driver for Railway compatibility
+    ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://")
 else:
     ASYNC_DATABASE_URL = DATABASE_URL
 

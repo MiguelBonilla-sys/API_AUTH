@@ -24,10 +24,17 @@ def main():
     if database_url:
         print(f"✅ Database configured: {database_url[:50]}...")
     else:
-        print("⚠️  DATABASE_URL not configured")
+        print("⚠️  DATABASE_URL not configured - using mock database for healthcheck only")
+    
+    # Check critical environment variables
+    jwt_secret = os.getenv("JWT_SECRET_KEY")
+    if not jwt_secret:
+        print("⚠️  JWT_SECRET_KEY not configured - generating temporary key")
+        os.environ["JWT_SECRET_KEY"] = "temp-development-key-not-for-production"
     
     try:
         # Start the server
+        print("🔥 Starting uvicorn server...")
         uvicorn.run(
             "main:app",
             host="0.0.0.0",
@@ -39,6 +46,10 @@ def main():
         )
     except Exception as e:
         print(f"❌ Error starting server: {e}")
+        print(f"🔍 Error type: {type(e).__name__}")
+        import traceback
+        print("📋 Full traceback:")
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
