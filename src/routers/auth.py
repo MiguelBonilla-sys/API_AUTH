@@ -11,6 +11,7 @@ from src.auth import (
     get_current_user
 )
 from src.config.database import get_db
+from src.config.db_status import check_database_available, require_database
 from src.models.user import User
 from src.schemas.auth import UserCreate, UserResponse, UserLogin, Token
 
@@ -25,6 +26,9 @@ async def register_user(
     """
     Register a new user
     """
+    # Check database availability
+    require_database()
+    
     # Check if user already exists
     result = await db.execute(
         select(User).where(
@@ -66,6 +70,9 @@ async def login_user(
     """
     Login user and return access and refresh tokens
     """
+    # Check database availability
+    require_database()
+    
     # Find user by username or email
     result = await db.execute(
         select(User).where(

@@ -84,6 +84,19 @@ async def health_check():
     return {"status": "healthy", "timestamp": "2025-09-19T00:00:00Z"}
 
 
+@app.get("/debug")
+async def debug_info():
+    """Debug endpoint to check configuration"""
+    database_url = os.getenv("DATABASE_URL")
+    return {
+        "database_configured": bool(database_url),
+        "database_url_prefix": database_url[:20] if database_url else None,
+        "jwt_secret_configured": bool(os.getenv("JWT_SECRET_KEY")),
+        "inventory_api_url": os.getenv("INVENTORY_API_BASE_URL"),
+        "environment": os.getenv("ENVIRONMENT", "production")
+    }
+
+
 # Railway compatibility: Run with uvicorn if executed directly
 if __name__ == "__main__":
     import uvicorn
