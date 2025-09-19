@@ -10,10 +10,10 @@ from sqlalchemy.orm import sessionmaker
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/api_auth")
 
 # Convert Railway DATABASE_URL to async if needed
-# Using psycopg2 instead of asyncpg due to compilation issues
+# Using psycopg (v3) for async compatibility
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
-    # Use psycopg2 driver for Railway compatibility
-    ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://")
+    # Use psycopg driver for async compatibility
+    ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://")
 else:
     ASYNC_DATABASE_URL = DATABASE_URL
 

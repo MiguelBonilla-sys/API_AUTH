@@ -10,7 +10,7 @@ def check_dependencies():
         'fastapi',
         'uvicorn',
         'sqlalchemy',
-        'psycopg2',  # This is what we're checking for
+        'psycopg',  # psycopg v3 for async support
         'pydantic',
         'httpx'
     ]
