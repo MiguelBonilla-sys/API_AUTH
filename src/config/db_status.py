@@ -21,7 +21,8 @@ def require_database():
 async def get_db_or_none():
     """Get database session or None if not available"""
     if not check_database_available():
-        return None
+        yield None
+        return
     
     # Import here to avoid circular imports
     from src.config.database import get_db
