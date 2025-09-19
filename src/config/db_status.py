@@ -8,7 +8,13 @@ from fastapi import HTTPException, status
 def check_database_available() -> bool:
     """Check if database is configured and available"""
     database_url = os.getenv("DATABASE_URL")
-    return bool(database_url and not database_url.startswith("postgresql://user:password@localhost"))
+    # Check if we have a real database URL (not the default fallback)
+    if not database_url:
+        return False
+    
+    # Exclude only the specific local fallback URL
+    local_fallback = "postgresql://user:password@localhost/api_auth"
+    return database_url != local_fallback
 
 def require_database():
     """Decorator to require database for certain endpoints"""
