@@ -1,52 +1,239 @@
-# API Auth Gateway
+# API Auth Gateway 🚀
 
-Un API Gateway que proporciona acceso autenticado a la API de inventario de activos de información. Este servicio actúa como un proxy seguro, requiriendo autenticación JWT antes de reenviar solicitudes a la API externa.
+Un **API Gateway** basado en FastAPI que proporciona acceso autenticado a la API externa de inventario de activos. Actúa como un proxy seguro con **control de acceso basado en propiedad**, requiriendo autenticación JWT antes de reenviar solicitudes a la API de inventario externa.
 
-## 🏗️ Arquitectura
+## 🏗️ Arquitectura del Sistema
 
-- **API Gateway**: Proxy autenticado usando FastAPI
-- **Base de datos**: PostgreSQL en Railway (solo para usuarios/auth)
-- **API Externa**: `https://inventoryapp.usbtopia.usbbog.edu.co`
-- **Deployment**: Railway con PostgreSQL integrado
+```mermaid
+graph TB
+    subgraph "Cliente"
+        FE[Frontend/Cliente]
+    end
+    
+    subgraph "API Gateway (FastAPI)"
+        AUTH[🔐 Auth Router<br/>JWT Authentication]
+        INV[📦 Inventory Router<br/>Protected Proxy]
+        CORS[🌐 CORS Middleware]
+        SENTRY[🚨 Sentry Integration]
+    end
+    
+    subgraph "Base de Datos"
+        PG[(🐘 PostgreSQL<br/>Railway)]
+    end
+    
+    subgraph "API Externa"
+        EXT[🏢 Inventory API<br/>inventoryapp.usbtopia.usbbog.edu.co]
+    end
+    
+    subgraph "Monitoreo"
+        SENT[📊 Sentry Dashboard]
+    end
+    
+    FE -->|HTTP Requests| CORS
+    CORS --> AUTH
+    CORS --> INV
+    
+    AUTH <-->|User Data<br/>JWT Validation| PG
+    INV -->|Ownership Check| PG
+    INV -->|Filtered Requests<br/>httpx.AsyncClient| EXT
+    
+    AUTH --> SENTRY
+    INV --> SENTRY
+    SENTRY --> SENT
+    
+    classDef gateway fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef external fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef database fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef monitoring fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    
+    class AUTH,INV,CORS gateway
+    class EXT external
+    class PG database
+    class SENT,SENTRY monitoring
+```
 
-## 🚀 Configuración Rápida
+### 🔄 Flujo de Autenticación y Autorización
 
-### 1. Instalar dependencias
-```bash
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant AG as API Gateway
+    participant DB as PostgreSQL
+    participant EXT as API Externa
+    
+    Note over C,EXT: 1. Autenticación
+    C->>AG: POST /auth/login (credentials)
+    AG->>DB: Validar usuario
+    DB-->>AG: User data + dueno_de_activo
+    AG-->>C: JWT Token
+    
+    Note over C,EXT: 2. Acceso a Inventario
+    C->>AG: GET /inventario (with JWT)
+    AG->>AG: Validar JWT
+    AG->>DB: Obtener user info
+    DB-->>AG: User + dueno_de_activo
+    AG->>EXT: GET /inventario (proxy)
+    EXT-->>AG: Raw inventory data
+    AG->>AG: Filtrar por ownership<br/>(user.dueno_de_activo)
+    AG-->>C: Filtered assets only
+    
+    Note over C,EXT: 3. Admin Access
+    C->>AG: GET /inventario (admin JWT)
+    AG->>AG: Check is_superuser=True
+    AG->>EXT: GET /inventario
+    EXT-->>AG: All inventory data
+    AG-->>C: Complete dataset (no filter)
+```
+
+## 🎯 Características Principales
+
+- **🔐 Autenticación JWT**: Sistema completo de autenticación con tokens de acceso y refresh
+- **🏢 Control de Propiedad**: Los usuarios solo ven activos que poseen (`dueno_de_activo`)
+- **👑 Acceso de Admin**: Los superusuarios pueden ver todos los activos
+- **🔄 Proxy Inteligente**: Filtra datos antes de reenviar a la API externa
+- **🚀 Despliegue en Railway**: Configuración automática de base de datos y puerto
+- **📊 Monitoreo con Sentry**: Seguimiento de errores y rendimiento
+- **⚡ Async/Await**: Arquitectura completamente asíncrona
+
+## 🛠️ Stack Tecnológico
+
+### Backend Core
+- **FastAPI 0.116+**: Framework web moderno y rápido
+- **SQLAlchemy 2.0**: ORM con soporte async y anotaciones `Mapped[type]`
+- **PostgreSQL**: Base de datos principal (Railway)
+- **httpx**: Cliente HTTP asíncrono para llamadas a API externa
+
+### Autenticación & Seguridad
+- **JWT**: Tokens de acceso y refresh
+- **bcrypt**: Hashing seguro de contraseñas
+- **HTTPBearer**: Esquema de seguridad FastAPI
+
+### Despliegue & Monitoreo
+- **Railway**: Plataforma de despliegue cloud
+- **Sentry**: Monitoreo de errores y rendimiento
+- **uvicorn**: Servidor ASGI de producción
+
+## 🚀 Inicio Rápido
+
+### Configuración del Entorno
+
+```cmd
+# Clonar el repositorio
+git clone https://github.com/MiguelBonilla-sys/API_AUTH.git
+cd API_AUTH
+
+# Crear entorno virtual
+python -m venv .venv
+.venv\Scripts\activate
+
+# Instalar dependencias
 pip install -r requirements.txt
 ```
 
-### 2. Configurar variables de entorno
-```bash
-cp .env.example .env
-# Editar .env con tus valores
+### Variables de Entorno
+
+Crear un archivo `.env` en la raíz del proyecto:
+
+```env
+# Base de datos (Railway auto-proporciona en producción)
+DATABASE_URL=postgresql://user:password@localhost:5432/api_auth
+
+# Autenticación JWT
+JWT_SECRET_KEY=tu_clave_secreta_muy_segura
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# API Externa
+INVENTORY_API_BASE_URL=https://inventoryapp.usbtopia.usbbog.edu.co
+
+# Monitoreo (opcional)
+SENTRY_DSN=tu_sentry_dsn_url
+
+# Railway (auto-detectado en producción)
+PORT=8000
 ```
 
-### 3. Ejecutar la aplicación
-```bash
-# Desarrollo
+### Ejecutar la Aplicación
+
+```cmd
+# Desarrollo con auto-reload
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# Railway (automático)
-uvicorn main:app --host 0.0.0.0 --port $PORT
+# La aplicación estará disponible en http://localhost:8000
+# Documentación interactiva en http://localhost:8000/docs
 ```
 
-## 📚 Endpoints Disponibles
+## 📁 Estructura del Proyecto
 
-### Autenticación
-- `POST /auth/register` - Registrar nuevo usuario
-- `POST /auth/login` - Iniciar sesión
-- `POST /auth/refresh` - Renovar token
-- `GET /auth/me` - Información del usuario actual
+```
+API_AUTH/
+├── main.py                    # Aplicación FastAPI principal
+├── requirements.txt           # Dependencias Python
+├── Procfile                  # Configuración Railway
+├── railway.toml              # Configuración Railway
+├── docker-compose.yml        # Docker para desarrollo
+├── Dockerfile               # Imagen Docker
+│
+├── src/
+│   ├── auth/                 # Sistema de autenticación
+│   │   ├── __init__.py
+│   │   ├── dependencies.py   # Dependencias de seguridad
+│   │   └── jwt_utils.py      # Utilidades JWT
+│   │
+│   ├── config/              # Configuración
+│   │   ├── __init__.py
+│   │   └── database.py      # Configuración SQLAlchemy
+│   │
+│   ├── models/              # Modelos de base de datos
+│   │   ├── __init__.py
+│   │   └── user.py          # Modelo de usuario
+│   │
+│   ├── routers/             # Rutas de la API
+│   │   ├── __init__.py
+│   │   ├── auth.py          # Endpoints de autenticación
+│   │   └── inventory.py     # Proxy de inventario
+│   │
+│   └── schemas/             # Esquemas Pydantic
+│       ├── __init__.py
+│       ├── auth.py          # Esquemas de autenticación
+│       └── inventory.py     # Esquemas de inventario
+│
+├── scripts/                 # Scripts de utilidades
+│   ├── create_users.py      # Crear usuarios en lote
+│   ├── upload_users_via_api.py  # Crear usuarios vía API
+│   ├── generate_credentials.py  # Generar credenciales de prueba
+│   └── setup_railway_db.py     # Configurar DB Railway
+│
+└── docs/                    # Documentación
+    ├── RAILWAY_DEPLOY.md    # Guía de despliegue
+    └── SISTEMA_PERMISOS.md  # Sistema de permisos
+```
 
-### Inventario (Requiere autenticación)
-- `GET /inventario/` - Listar activos
-- `POST /inventario/` - Crear activo
-- `GET /inventario/{id}` - Obtener activo específico
-- `PUT /inventario/{id}` - Actualizar activo
-- `DELETE /inventario/{id}` - Eliminar activo
+## 🔐 Sistema de Autenticación
 
-## 🔐 Autenticación
+### Endpoints de Autenticación
+
+- `POST /auth/register`: Registrar nuevo usuario
+- `POST /auth/login`: Iniciar sesión y obtener tokens
+- `POST /auth/refresh`: Renovar token de acceso
+- `GET /auth/me`: Obtener información del usuario actual
+
+### Control de Acceso Basado en Propiedad
+
+```python
+# Los usuarios normales solo ven sus activos
+if not current_user.is_superuser:
+    filtered_assets = [
+        asset for asset in all_assets 
+        if asset.get("DUEÑO_DE_ACTIVO") == current_user.dueno_de_activo
+    ]
+else:
+    # Los administradores ven todos los activos
+    filtered_assets = all_assets
+```
+
+## � API de Inventario (Proxy)
 
 Todos los endpoints de inventario requieren un token JWT válido:
 
