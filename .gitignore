@@ -175,3 +175,56 @@ poetry.toml
 pyrightconfig.json
 
 .DS_Store
+
+# ================================
+# PROJECT SPECIFIC ADDITIONS
+# ================================
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.staging
+
+# Database files (local development)
+*.db
+*.sqlite3
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Railway deployment
+.railway/
+
+# User credentials (local development only)
+user_credentials.json
+scripts/user_credentials.json
+
+# Docker
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# MacOS specific (additional)
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# FastAPI specific
+.pytest_cache/
